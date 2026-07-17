@@ -1,0 +1,15 @@
+{
+  "name": "iqm-ds-sync",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Sync layer for IQM's Figma design system — extracts tokens & components, stores them, diffs versions, and distributes docs/handoff. Phase 0 scaffolding.",
+  "type": "module",
+  "scripts": {
+    "phase0": "node -e \"console.log('Phase 0 is scaffolding only — nothing to run yet.')\""
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

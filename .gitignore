@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Environment / secrets
+.env
+.env.local
+
+# Firebase service account keys
+*-service-account.json
+service-account*.json
+serviceAccountKey*.json
+*.serviceaccount.json
+
+# Figma personal access tokens (if ever written to disk)
+.figma-pat
+
+# OS / editor cruft
+.DS_Store
+*.log

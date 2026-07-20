@@ -14,6 +14,12 @@ serviceAccountKey*.json
 # Figma personal access tokens (if ever written to disk)
 .figma-pat
 
+# Generated extraction output (local artifacts, may contain file content)
+src/extract/output/
+
+# Built Figma plugin bundle (source of truth is code.ts; run `npm run build:plugin`)
+src/plugin/code.js
+
 # OS / editor cruft
 .DS_Store
 *.log

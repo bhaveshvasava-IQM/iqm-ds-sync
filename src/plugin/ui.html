@@ -1,0 +1,119 @@
+<!-- Plugin UI panel. Talks to code.js via window.postMessage / onmessage.
+     Kept deliberately minimal — extract, show, copy. -->
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    font: 12px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    margin: 0;
+    padding: 12px;
+    color: #1e1e1e;
+    background: #fff;
+  }
+  h1 { font-size: 13px; margin: 0 0 4px; }
+  p.hint { margin: 0 0 10px; color: #666; font-size: 11px; }
+  .row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+  button {
+    font: inherit;
+    border: 0;
+    border-radius: 6px;
+    padding: 7px 12px;
+    cursor: pointer;
+  }
+  button.primary { background: #0d99ff; color: #fff; }
+  button.primary:hover { background: #0b87e0; }
+  button.secondary { background: #ebebeb; color: #333; }
+  button.secondary:hover { background: #e0e0e0; }
+  button:disabled { opacity: .5; cursor: default; }
+  textarea {
+    width: 100%;
+    box-sizing: border-box;
+    height: 340px;
+    resize: vertical;
+    font: 11px/1.45 "SF Mono", Menlo, Consolas, monospace;
+    border: 1px solid #d9d9d9;
+    border-radius: 6px;
+    padding: 8px;
+    white-space: pre;
+    overflow: auto;
+  }
+  .status { font-size: 11px; color: #666; min-height: 15px; margin-top: 6px; }
+  .status.warn { color: #b25000; }
+  .status.err { color: #c00; }
+</style>
+
+<h1>IQM Design System Token Exporter</h1>
+<p class="hint">Reads local variables → normalizes to W3C DTCG JSON. Nothing leaves Figma.</p>
+
+<div class="row">
+  <button id="export" class="primary">Export Tokens</button>
+  <button id="copy" class="secondary" disabled>Copy to clipboard</button>
+</div>
+
+<textarea id="output" readonly placeholder="Click “Export Tokens” to read the file's variables…"></textarea>
+
+<div class="status" id="status"></div>
+<p class="hint">
+  💾 <strong>Save to file:</strong> plugins can't write to disk. Click
+  <em>Copy to clipboard</em> (or select all in the box) and paste into a
+  <code>.json</code> file locally.
+</p>
+
+<script>
+  var exportBtn = document.getElementById('export');
+  var copyBtn = document.getElementById('copy');
+  var output = document.getElementById('output');
+  var status = document.getElementById('status');
+
+  function setStatus(text, kind) {
+    status.textContent = text || '';
+    status.className = 'status' + (kind ? ' ' + kind : '');
+  }
+
+  exportBtn.onclick = function () {
+    output.value = 'loading…';
+    copyBtn.disabled = true;
+    setStatus('Reading variables…');
+    parent.postMessage({ pluginMessage: { type: 'exportTokens' } }, '*');
+  };
+
+  copyBtn.onclick = function () {
+    output.select();
+    // execCommand is the most reliable path inside the Figma iframe sandbox.
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    setStatus(ok ? 'Copied to clipboard.' : 'Copy failed — select the text and copy manually.', ok ? '' : 'warn');
+  };
+
+  window.onmessage = function (event) {
+    var msg = event.data && event.data.pluginMessage;
+    if (!msg || msg.type !== 'result') return;
+
+    if (!msg.ok) {
+      output.value = '';
+      copyBtn.disabled = true;
+      setStatus('Error: ' + (msg.message || 'unknown error'), 'err');
+      return;
+    }
+
+    if (msg.empty) {
+      output.value = '';
+      copyBtn.disabled = true;
+      setStatus(msg.message || 'No variables found', 'warn');
+      return;
+    }
+
+    output.value = JSON.stringify(msg.json, null, 2);
+    copyBtn.disabled = false;
+    var warnCount = (msg.warnings && msg.warnings.length) || 0;
+    var violCount = msg.violationCount || 0;
+    var base = 'Exported ' + (msg.count != null ? msg.count + ' variables.' : 'tokens.');
+    base += ' C1-bypass violations: ' + violCount + '.';
+    if (violCount) {
+      setStatus(base + ' See the plugin console for offending tokens.', 'err');
+    } else if (warnCount) {
+      setStatus(base + ' ' + warnCount + ' warning(s) — see the plugin console.', 'warn');
+    } else {
+      setStatus(base);
+    }
+  };
+</script>

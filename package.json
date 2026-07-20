@@ -5,11 +5,17 @@
   "description": "Sync layer for IQM's Figma design system — extracts tokens & components, stores them, diffs versions, and distributes docs/handoff. Phase 0 scaffolding.",
   "type": "module",
   "scripts": {
-    "phase0": "node -e \"console.log('Phase 0 is scaffolding only — nothing to run yet.')\""
+    "phase0": "node -e \"console.log('Phase 0 is scaffolding only — nothing to run yet.')\"",
+    "extract:components": "node src/extract/run.js",
+    "build:plugin": "esbuild src/plugin/code.ts --bundle --outfile=src/plugin/code.js"
   },
   "engines": {
     "node": ">=18"
   },
-  "dependencies": {},
-  "devDependencies": {}
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "esbuild": "^0.23.0"
+  }
 }

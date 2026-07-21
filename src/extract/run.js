@@ -2,11 +2,10 @@
 //
 // 1. Fetch the raw file tree from Figma.
 // 2. Normalize COMPONENT / COMPONENT_SET nodes into records.
-// 3. Write the result to src/extract/output/components-{timestamp}.json
-// 4. Print a short summary: component count, component-set count, and any
+// 3. Write the result to the SQLite store (Phase 4) as a new snapshot.
+// 4. Also write a local JSON copy for debugging.
+// 5. Print a short summary: component count, component-set count, and any
 //    nodes with an empty description (documentation gaps).
-//
-// No Firebase, no database writes — local JSON only.
 
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -14,6 +13,7 @@ import { fileURLToPath } from 'node:url';
 
 import { fetchFileTree } from './figma-client.js';
 import { extractComponents } from './extract-components.js';
+import { createSnapshot, writeComponents } from '../store/local-db.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUTPUT_DIR = join(__dirname, 'output');
@@ -52,6 +52,11 @@ async function main() {
 
   await mkdir(OUTPUT_DIR, { recursive: true });
   await writeFile(outPath, JSON.stringify(payload, null, 2), 'utf8');
+
+  // ---- Write to the store (the real destination; JSON above is for debugging) ----
+  const snapshotId = createSnapshot('component_extract', `${components.length} components extracted`);
+  const written = writeComponents(snapshotId, components);
+  console.log(`\n✓ Wrote ${written} components to snapshot ${snapshotId}`);
 
   // ---- Console summary ----
   console.log('\n=== Extraction summary ===');

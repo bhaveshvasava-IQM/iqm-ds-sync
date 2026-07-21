@@ -20,6 +20,14 @@ src/extract/output/
 # Built Figma plugin bundle (source of truth is code.ts; run `npm run build:plugin`)
 src/plugin/code.js
 
+# SQLite database files — schema.sql is committed, the data is not
+*.db
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+src/store/*.db
+src/store/*.sqlite
+
 # OS / editor cruft
 .DS_Store
 *.log

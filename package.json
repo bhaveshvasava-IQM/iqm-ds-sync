@@ -7,12 +7,15 @@
   "scripts": {
     "phase0": "node -e \"console.log('Phase 0 is scaffolding only — nothing to run yet.')\"",
     "extract:components": "node src/extract/run.js",
-    "build:plugin": "esbuild src/plugin/code.ts --bundle --outfile=src/plugin/code.js"
+    "build:plugin": "esbuild src/plugin/code.ts --bundle --outfile=src/plugin/code.js",
+    "test:store": "node src/store/local-db.test.js",
+    "import:tokens": "node src/store/import-tokens.js"
   },
   "engines": {
     "node": ">=18"
   },
   "dependencies": {
+    "better-sqlite3": "^11.8.1",
     "dotenv": "^16.4.5"
   },
   "devDependencies": {

@@ -77,3 +77,29 @@ since variables + modes + C1-bypass checks aren't reachable from the REST API.
 Phase 1 (REST extraction): 486 components, 90 with descriptions, 396 gaps
 Phase 2 (Figma plugin): 1,075 variables, 4-layer hierarchy verified, 
   zero violations, modes auto-detected correctly. Ready for Phases 3–8.
+
+---
+
+## Phase 3: local SQLite store — 2026-07
+
+- `src/store/schema.sql` + `local-db.js` (better-sqlite3 v11): snapshots /
+  components / tokens, FKs on, upsert via unique `(id, snapshot_id)` indexes.
+- Storage-agnostic interface (createSnapshot / write* / get* / listSnapshots /
+  getSnapshot); CLI inspector; `test:store` → 21/21 pass against a temp DB.
+- DB at `src/store/db.sqlite` (gitignored; schema committed).
+
+## Phase 4: wiring → store
+
+- extract:components now writes to SQLite
+- import-tokens CLI available for plugin exports
+- End-to-end test: run extract, export tokens from plugin, import
+  them, verify in CLI
+
+**Verified 2026-07-21:** `extract:components` wrote **487** components to
+snapshot 1 against the live Figma file (count drifted from Phase 1's 486 —
+the file changed). The token path was verified end-to-end with a
+**representative sample** export (5 tokens across all four layers, incl. an
+alias): `import:tokens` flattened the nested DTCG structure, derived
+`tokenPath`/`layer` correctly, and wrote them to snapshot 2; `cli.js snapshots`
+listed both; `cli.js show` dumped both. The real ~1,075-token import still needs
+a live plugin export from Figma (plugin runs in-app; not reproducible headless).

@@ -88,18 +88,21 @@ Phase 2 (Figma plugin): 1,075 variables, 4-layer hierarchy verified,
   getSnapshot); CLI inspector; `test:store` → 21/21 pass against a temp DB.
 - DB at `src/store/db.sqlite` (gitignored; schema committed).
 
-## Phase 4: wiring → store
+## [2026-07] Phase 4: wiring → store
 
-- extract:components now writes to SQLite
-- import-tokens CLI available for plugin exports
-- End-to-end test: run extract, export tokens from plugin, import
-  them, verify in CLI
+- `src/extract/run.js` now writes components to SQLite (keeps the JSON debug copy)
+- Created `src/store/import-tokens.js` for manual token import — flattens the
+  plugin's nested DTCG export into flat rows, deriving `tokenPath` from the key
+  path and `layer` from the top-level key (primitives → "Primitives", etc.)
+- Store tests: 21/21 passing
+- Wiring is live and testable. Next: Phase 5 (diff engine)
 
-**Verified 2026-07-21:** `extract:components` wrote **487** components to
-snapshot 1 against the live Figma file (count drifted from Phase 1's 486 —
-the file changed). The token path was verified end-to-end with a
-**representative sample** export (5 tokens across all four layers, incl. an
-alias): `import:tokens` flattened the nested DTCG structure, derived
-`tokenPath`/`layer` correctly, and wrote them to snapshot 2; `cli.js snapshots`
-listed both; `cli.js show` dumped both. The real ~1,075-token import still needs
-a live plugin export from Figma (plugin runs in-app; not reproducible headless).
+**Verified 2026-07-21:** `extract:components` wrote real components to snapshot 1
+against the live Figma file (count now **497** — it keeps drifting from Phase 1's
+486 as the file is actively edited; Phase 5's diff will track exactly this). The
+token path was verified end-to-end with a **representative sample** export
+(5 tokens across all four layers, incl. an alias) plus a mismatch case proving
+the top-level-key layer mapping wins over `$extensions.collectionName`:
+`import:tokens` flattened, wrote to snapshot 2, and both were queryable via
+`cli.js`. The real ~1,075-token import still needs a live plugin export from
+Figma (the plugin runs in-app; not reproducible headless).

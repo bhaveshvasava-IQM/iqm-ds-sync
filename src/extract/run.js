@@ -54,7 +54,7 @@ async function main() {
   await writeFile(outPath, JSON.stringify(payload, null, 2), 'utf8');
 
   // ---- Write to the store (the real destination; JSON above is for debugging) ----
-  const snapshotId = createSnapshot('component_extract', `${components.length} components extracted`);
+  const snapshotId = createSnapshot('component_extract', `${components.length} components extracted via REST API`);
   const written = writeComponents(snapshotId, components);
   console.log(`\n✓ Wrote ${written} components to snapshot ${snapshotId}`);
 

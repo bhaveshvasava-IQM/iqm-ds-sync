@@ -14,6 +14,14 @@ import { resolve } from "node:path";
 
 import { createSnapshot, writeTokens } from "./local-db.js";
 
+// Map the plugin's top-level layer key onto the store's layer label.
+const LAYER_MAP = {
+  primitives: "Primitives",
+  globalAlias: "Global Alias",
+  systemAlias: "System Alias",
+  component: "Component",
+};
+
 // A node is a token leaf if it carries any DTCG marker key.
 function isToken(node) {
   return (
@@ -26,14 +34,21 @@ function isToken(node) {
 
 /**
  * Walk the nested structure and collect flat token rows. Each leaf keeps its
- * original DTCG fields and gains a `tokenPath` built from its key path.
- * writeTokens() derives tokenId/layer/modes from $extensions when absent.
+ * original DTCG fields and gains:
+ *   - tokenPath: the "/"-joined key path from root to leaf
+ *   - layer: mapped from the top-level key (primitives → "Primitives", …)
+ * `layer` is only set when the top-level key is recognized; otherwise it's
+ * left off so writeTokens() can fall back to $extensions.com.iqm.figma.
+ * tokenId/modes continue to come from $extensions via writeTokens().
  */
 function flattenTokens(root) {
   const out = [];
   function walk(node, path) {
     if (isToken(node)) {
-      out.push({ ...node, tokenPath: path.join("/") });
+      const layer = LAYER_MAP[path[0]];
+      const flat = { ...node, tokenPath: path.join("/") };
+      if (layer) flat.layer = layer;
+      out.push(flat);
       return;
     }
     if (node && typeof node === "object" && !Array.isArray(node)) {
@@ -59,6 +74,7 @@ function main() {
     parsed = JSON.parse(readFileSync(abs, "utf8"));
   } catch (err) {
     console.error(`✗ Couldn't read/parse "${abs}": ${err.message}`);
+    console.error("  Usage: node src/store/import-tokens.js <path-to-plugin-token-export.json>");
     process.exit(1);
   }
 

@@ -130,3 +130,32 @@ Figma (the plugin runs in-app; not reproducible headless).
 exit 0); and the JSON output was structurally validated against
 `DIFF_OUTPUT_SCHEMA.md` using a temp db with two deliberately-differing
 snapshots (1 added / 1 modified / 1 removed on each of components and tokens).
+
+---
+
+## [2026-07-22] Real token import + Phase 7: dev exports
+
+**Milestone — pipeline end-to-end with real data.** Imported the real Phase 2
+plugin export: **snapshot 2 = 1,135 tokens** (264 Primitives / 128 Global Alias
+/ 117 System Alias / 626 Component; 626/626 component tokens
+`c1BypassChecked: true`, zero violations) alongside snapshot 1's 487 components.
+Docs site rebuilt — token pages (1,135) now populate. Docs `store.js` fixed to
+resolve latest-per-type (components and tokens live in separate snapshots) and
+to diff only same-source snapshots in the changelog.
+
+**Phase 7 — dev exports (`src/export/`):** six exporters (CSS, SCSS, JSON/DTCG,
+JS ESM, TS defs, changelog) + `build.js` orchestrator (`--out` for docs) +
+`validate.js` + `index.js`. `npm run export` → `dist/` (gitignored);
+`npm run test:export` → 21/21; `npm run validate:export` → 14/14.
+- CSS keeps `var(--ref)` alias chains (order-independent); SCSS flattens aliases
+  to concrete values (SCSS vars are order-dependent).
+- `varName` sanitizes non-identifier chars (fixed a real bug: token
+  `font-weight/semi bold` produced an invalid CSS/SCSS identifier with a space).
+- Integrated into iqm-ds-docs via a `prebuild` step → exports deploy at
+  `/tokens.css`, `/tokens.json`, etc. on every docs build.
+
+**Known limits (unchanged from earlier phases):** dimension tokens export as
+unitless numbers (store holds raw Figma values); per-mode Light/Dark values
+aren't captured upstream (plugin emits default-mode value + mode names only), so
+no dark-mode export block. `tsc` isn't installed locally, so the `.d.ts` was
+verified structurally + via the runtime `tokens.js` import, not a full type-check.

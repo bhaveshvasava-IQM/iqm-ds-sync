@@ -28,6 +28,9 @@ src/plugin/code.js
 src/store/*.db
 src/store/*.sqlite
 
+# Generated dev exports (Phase 7) — regenerate with `npm run export`
+dist/
+
 # OS / editor cruft
 .DS_Store
 *.log

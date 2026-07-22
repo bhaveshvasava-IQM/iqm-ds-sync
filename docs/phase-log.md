@@ -106,3 +106,27 @@ the top-level-key layer mapping wins over `$extensions.collectionName`:
 `import:tokens` flattened, wrote to snapshot 2, and both were queryable via
 `cli.js`. The real ~1,075-token import still needs a live plugin export from
 Figma (the plugin runs in-app; not reproducible headless).
+
+---
+
+## Phase 5: diff engine
+
+- Implemented component + token diffing with field-level granularity
+  (`src/diff/engine.js`, pure & storage-agnostic): only the fields that differ
+  appear in `changes` as `[old, new]`; deep, key-order-independent comparison
+  for `variantProperties` / `modes` / `$extensions`.
+- Produces machine + human-readable changesets; shape documented in
+  `docs/DIFF_OUTPUT_SCHEMA.md` (the contract for Phase 6/8).
+- `local-db-adapter.js` reads snapshots from the Phase 3 store
+  (`getDiff`, `listDiffs`).
+- **26** test cases covering added/removed/modified (each field), unchanged,
+  mixed scenarios, and summary phrasing — `npm run test:diff` → 26/26.
+- CLI for manual inspection: `node src/diff/cli.js compare <A> <B>`
+  (also `show <A> <B> --json`, `recent [N]`).
+- Ready for Phase 6 (docs integration) + Phase 8 (MCP layer).
+
+**Verified 2026-07-21:** all three acceptance criteria met — tests pass;
+`compare 1 2` runs cleanly even when a snapshot is missing (graceful message,
+exit 0); and the JSON output was structurally validated against
+`DIFF_OUTPUT_SCHEMA.md` using a temp db with two deliberately-differing
+snapshots (1 added / 1 modified / 1 removed on each of components and tokens).

@@ -9,7 +9,8 @@
     "extract:components": "node src/extract/run.js",
     "build:plugin": "esbuild src/plugin/code.ts --bundle --outfile=src/plugin/code.js",
     "test:store": "node src/store/local-db.test.js",
-    "import:tokens": "node src/store/import-tokens.js"
+    "import:tokens": "node src/store/import-tokens.js",
+    "test:diff": "node src/diff/diff.test.js"
   },
   "engines": {
     "node": ">=18"

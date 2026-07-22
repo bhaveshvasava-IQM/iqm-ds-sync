@@ -159,3 +159,28 @@ unitless numbers (store holds raw Figma values); per-mode Light/Dark values
 aren't captured upstream (plugin emits default-mode value + mode names only), so
 no dark-mode export block. `tsc` isn't installed locally, so the `.d.ts` was
 verified structurally + via the runtime `tokens.js` import, not a full type-check.
+
+---
+
+## [2026-07-22] Phase 8: MCP server
+
+Wraps the store as an MCP server (`src/mcp/`) for AI agents (Claude/Cursor/Zed) —
+queryable design system, no Figma. Uses `@modelcontextprotocol/sdk` v1.29 + zod.
+
+- **5 tools:** query-token (resolves alias chains), list-components, get-component,
+  find-changes, search-design-system. Pure `run()` logic, SDK-free and unit-tested.
+- **4 resources:** `iqm://tokens/reference`, `iqm://components/guide`,
+  `iqm://changelog`, `iqm://architecture`.
+- `server.js` (stdio + `createServer()` factory), `cli.js` (list/call/resource +
+  `selftest` in-memory round-trip), README with editor-config.
+- Verified: `test:mcp` 18/18 (tool logic vs real store — incl. the full
+  component→system→global→primitive alias chain resolving to `#215EE5`);
+  `mcp:selftest` 6/6 (real Client↔Server over InMemoryTransport:
+  listTools/callTool/listResources/readResource).
+
+**Known limits:** token↔component usage bindings not captured (whereUsed/tokensUsed
+null); default-mode values only; changelog needs ≥2 same-source snapshots.
+
+**Pipeline complete (Phases 0–8):** Figma → extract/plugin → SQLite store → diff →
+docs site → dev exports → MCP. Firebase (schema env vars present) still unwired;
+no git remote (commits local).

@@ -13,14 +13,19 @@
     "test:diff": "node src/diff/diff.test.js",
     "export": "node src/export/build.js",
     "validate:export": "node src/export/validate.js",
-    "test:export": "node src/export/export.test.js"
+    "test:export": "node src/export/export.test.js",
+    "mcp": "node src/mcp/server.js",
+    "mcp:selftest": "node src/mcp/cli.js selftest",
+    "test:mcp": "node src/mcp/mcp.test.js"
   },
   "engines": {
     "node": ">=18"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "better-sqlite3": "^11.8.1",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "esbuild": "^0.23.0"

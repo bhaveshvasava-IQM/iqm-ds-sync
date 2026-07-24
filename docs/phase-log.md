@@ -184,3 +184,41 @@ null); default-mode values only; changelog needs ≥2 same-source snapshots.
 **Pipeline complete (Phases 0–8):** Figma → extract/plugin → SQLite store → diff →
 docs site → dev exports → MCP. Firebase (schema env vars present) still unwired;
 no git remote (commits local).
+
+---
+
+## [2026-07-24] Hosting + display polish (deploy config / display layer only)
+
+Four scoped changes — no touching the MCP server, exports, diff engine,
+extraction, or the store's underlying data. Committed as four separate commits
+(three in iqm-ds-docs, one here).
+
+- **Task 1 — GitHub Pages (iqm-ds-docs):** `site`/`base` (`/iqm-ds-docs`) in
+  astro.config; `withBase()`/`stripBase()` helpers applied across all internal
+  links; `.github/workflows/deploy.yml` builds + deploys to Pages. The docs
+  build reads THIS sibling repo (prebuild exporter + `db.sqlite`), so the
+  workflow checks out **both** repos and `npm install`s each. Triggers: push to
+  main, workflow_dispatch, and `repository_dispatch: store-updated` (the cascade
+  target for Task 4). No git remote yet → not pushed; user must create the repo
+  + remote before the first deploy.
+- **Task 2 — sidebar filter (iqm-ds-docs):** reused the existing `isInternal()`
+  to drop `_`/`.`-prefixed atoms from the sidebar tree (directory toggle stays
+  the audit escape hatch).
+- **Task 3 — icons as Foundations (iqm-ds-docs):** `FOUNDATION_PAGES = ["Icons"]`
+  + `isFoundation()` in store.js (display layer only; `page` field untouched).
+  Icons (363) moved out of the component library into a new "Foundations"
+  sidebar group + `/foundations` page; excluded from the components grid.
+  Honest three-bucket math, no double-counting: **50 components · 74 internal
+  atoms · 363 icons (Foundations) = 487**.
+- **Task 4 — one-click sync (this repo):** `sync-and-deploy.yml` (workflow_dispatch
+  → extract:components → force-add/commit `db.sqlite` → push → cross-repo
+  `repository_dispatch` to docs) + optional `import-tokens.yml` (JSON text
+  input). Secrets only (FIGMA_PAT, FIGMA_FILE_KEY, DOCS_DISPATCH_TOKEN);
+  workflow_dispatch is write-access-only. Plain-language `docs/HOW_TO_SYNC.md`.
+
+**Deploy prerequisites (not yet satisfied — no remote configured):** create the
+two GitHub repos + remotes; add the three Actions secrets; the store `db.sqlite`
+must be committed in this repo for the docs CI to have data (the sync workflow
+force-adds it — or commit it once manually to bootstrap the first deploy). The
+full cascade (sync → commit → push → docs rebuild → live site) can only be
+verified once remotes + secrets exist.

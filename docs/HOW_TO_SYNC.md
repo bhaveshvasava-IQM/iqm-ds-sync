@@ -6,14 +6,14 @@ Figma. It runs in the browser — you don't need to install anything.
 ## Refresh components from Figma
 
 1. Go to the **iqm-ds-sync** repository on GitHub:
-   https://github.com/bhaveshvasava/iqm-ds-sync
+   https://github.com/bhaveshvasava-IQM/iqm-ds-sync
 2. Click the **Actions** tab (top of the page).
 3. In the left list, click **Sync Design System**.
 4. Click the **Run workflow** button on the right, then **Run workflow** again
    to confirm.
 5. Wait about a minute. When the row shows a green ✓, it's done.
 6. Open the docs site to see the update — it rebuilds automatically:
-   https://bhaveshvasava.github.io/iqm-ds-docs
+   https://bhaveshvasava-iqm.github.io/iqm-ds-docs
 
 That's it. The sync pulls the current components from Figma, saves them, and
 tells the docs site to rebuild itself.

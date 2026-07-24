@@ -1,0 +1,80 @@
+name: Sync Design System
+
+# One-click extraction of components from Figma into the SQLite store, then a
+# cascade that rebuilds the public docs site.
+#
+# HOW IT RUNS: Actions tab -> "Sync Design System" -> "Run workflow" button.
+# workflow_dispatch can only be started by users with WRITE access to this repo
+# (GitHub's built-in permission model — no extra config needed), so a random
+# reader cannot trigger a sync.
+#
+# SECRETS (Settings -> Secrets and variables -> Actions):
+#   FIGMA_PAT       - Figma personal access token (NEVER hardcode in YAML/code)
+#   FIGMA_FILE_KEY  - the <FILE_KEY> from figma.com/file/<FILE_KEY>/...
+#   DOCS_DISPATCH_TOKEN - a fine-grained PAT with "Contents: read" + "Actions:
+#                         read/write" on bhaveshvasava/iqm-ds-docs, used to fire
+#                         the cross-repo rebuild. (The default GITHUB_TOKEN is
+#                         scoped to THIS repo only and cannot dispatch to docs.)
+
+on:
+  workflow_dispatch: # renders the "Run workflow" button; no inputs for the component path
+
+# Let the job commit the refreshed store back to this repo.
+permissions:
+  contents: write
+
+concurrency:
+  group: sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout iqm-ds-sync
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps
+        run: npm install
+
+      - name: Extract components from Figma
+        env:
+          FIGMA_PAT: ${{ secrets.FIGMA_PAT }}
+          FIGMA_FILE_KEY: ${{ secrets.FIGMA_FILE_KEY }}
+        run: npm run extract:components
+
+      - name: Count extracted components
+        id: count
+        run: |
+          N=$(node -e "const D=require('better-sqlite3');const db=new D('src/store/db.sqlite',{readonly:true});const s=db.prepare('SELECT MAX(snapshot_id) m FROM components').get().m;console.log(db.prepare('SELECT COUNT(*) c FROM components WHERE snapshot_id=?').get(s).c);")
+          echo "n=$N" >> "$GITHUB_OUTPUT"
+          echo "Extracted $N components."
+
+      - name: Commit refreshed store
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # db.sqlite is gitignored for local dev; force-add so CI (and the docs
+          # build, which reads this file) always has the latest data.
+          git add -f src/store/db.sqlite
+          if git diff --cached --quiet; then
+            echo "No store changes to commit."
+          else
+            git commit -m "Automated sync: extracted ${{ steps.count.outputs.n }} components on $(date -u +'%Y-%m-%d')"
+            git push origin main
+          fi
+
+      - name: Trigger docs rebuild (cross-repo cascade)
+        run: |
+          curl -sSf -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.DOCS_DISPATCH_TOKEN }}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/repos/bhaveshvasava/iqm-ds-docs/dispatches \
+            -d '{"event_type":"store-updated"}'
+          echo "Dispatched store-updated to iqm-ds-docs — the docs Pages deploy will run."
